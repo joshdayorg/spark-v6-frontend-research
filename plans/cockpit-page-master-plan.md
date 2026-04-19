@@ -1,4 +1,4 @@
-# Cockpit Page — Master Plan
+# Cockpit Page — Master Plan v2
 
 > The homepage of Spark. Not a chat. A supercomputer interface built around **Who, What, When, Where, Why, How** — six dimensions of intent that replace the blank text box with a structured control surface.
 
@@ -17,54 +17,85 @@ They're separate but connected. You can start in Cockpit and a complex interacti
 
 ---
 
+## Stack
+
+### Already Have (keep everything)
+| Tool | What it does | Status |
+|------|-------------|--------|
+| **Next.js 16** App Router | Page routing, server components | ✅ |
+| **Vercel AI SDK** (`ai` + `@ai-sdk/react`) | `useChat`, `streamText`, model routing, tool execution | ✅ |
+| **AI Elements** | Conversation components (for chat escalation) | ✅ |
+| **shadcn/ui** | Base primitives (buttons, popovers, command palette, cards) | ✅ |
+| **Tailwind CSS v4** | Styling | ✅ |
+| **Recharts** | Charts | ✅ |
+| **TanStack Table** | Data tables / grids | ✅ |
+| **Convex** | Real-time backend, agent threads, subscriptions | ✅ |
+| **Motion** (framer-motion) | Animations | ✅ |
+| **cmdk** | Command palette | ✅ |
+
+### Adding (one new dep)
+| Tool | What it does | Why |
+|------|-------------|-----|
+| **[OpenUI](https://github.com/thesysdev/openui)** `@openuidev/react-lang` | Generative UI protocol. Define components with Zod → auto-generate system prompt → LLM responds in OpenUI Lang → streaming renderer displays your React components. 67% fewer tokens than JSON. | This is the core innovation. Lets the LLM compose your UI dynamically instead of returning text. |
+
+### Build ourselves (with existing deps)
+| Widget | Built with | When |
+|--------|-----------|------|
+| Timeline | shadcn + Tailwind | Phase 3 |
+| Tree view | shadcn + recursive components | Phase 3 |
+| Kanban | shadcn + @dnd-kit (small dep) | Phase 3 if needed |
+| Filters / faceted search | shadcn popovers + badges | Phase 2 |
+| Stepper | shadcn + Tailwind | Phase 3 |
+
+### Dropped
+| Tool | Why dropped |
+|------|------------|
+| ~~ReUI~~ | Not a library — it's a gallery of 1000+ shadcn example variations. Everything it offers can be built with what we already have. |
+
+---
+
 ## Page Anatomy
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │  SPARK COCKPIT                                    [⚙] [Chat →] │
 │                                                                 │
-│  ┌─────────────────────────────────────────────────────────┐    │
-│  │                    DIMENSION BAR                         │    │
-│  │                                                         │    │
-│  │  ┌─────┐  ┌──────┐  ┌──────┐  ┌───────┐  ┌─────┐  ┌─────┐│
-│  │  │ WHO │  │ WHAT │  │ WHEN │  │ WHERE │  │ WHY │  │ HOW ││
-│  │  └─────┘  └──────┘  └──────┘  └───────┘  └─────┘  └─────┘│
-│  │                                                         │    │
-│  │  Small pills / capsules. Tap to expand. Glow when active│    │
-│  └─────────────────────────────────────────────────────────┘    │
+│  ┌─────────────────────────────────────────────────────────────┐│
+│  │                    DIMENSION BAR                            ││
+│  │                                                             ││
+│  │  ┌─────┐  ┌──────┐  ┌──────┐  ┌───────┐  ┌─────┐  ┌─────┐││
+│  │  │ WHO │  │ WHAT │  │ WHEN │  │ WHERE │  │ WHY │  │ HOW │││
+│  │  └─────┘  └──────┘  └──────┘  └───────┘  └─────┘  └─────┘││
+│  │                                                             ││
+│  │  Small pills / capsules. Tap to expand. Glow when active.  ││
+│  └─────────────────────────────────────────────────────────────┘│
 │                                                                 │
-│  ┌─────────────────────────────────────────────────────────┐    │
-│  │                  QUERY SYNTHESIS BAR                     │    │
-│  │                                                         │    │
-│  │  "Show me [Sarah's] [deployment history] from [last     │    │
-│  │   week] in [GitHub] to [debug the outage]"              │    │
-│  │                                                         │    │
-│  │  Live-updating as you interact with dimension pills.    │    │
-│  │  Also typeable — free text auto-populates dimensions.   │    │
-│  │                                       [Execute ⚡]      │    │
-│  └─────────────────────────────────────────────────────────┘    │
+│  ┌─────────────────────────────────────────────────────────────┐│
+│  │                  QUERY SYNTHESIS BAR                        ││
+│  │                                                             ││
+│  │  "Show me [Sarah's] [deployment history] from [last        ││
+│  │   week] in [GitHub] to [debug the outage]"                 ││
+│  │                                                             ││
+│  │  Live-updating as you interact with dimension pills.       ││
+│  │  Also typeable — free text auto-populates dimensions.      ││
+│  │                                       [Execute ⚡]         ││
+│  └─────────────────────────────────────────────────────────────┘│
 │                                                                 │
-│  ┌─────────────────────────────────────────────────────────┐    │
-│  │                  RESPONSE SURFACE                        │    │
-│  │                                                         │    │
-│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │    │
-│  │  │  Data Grid   │  │   Timeline   │  │    Cards     │  │    │
-│  │  │  (ReUI)      │  │   (ReUI)     │  │   (shadcn)   │  │    │
-│  │  └──────────────┘  └──────────────┘  └──────────────┘  │    │
-│  │                                                         │    │
-│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │    │
-│  │  │   Kanban     │  │    Tree      │  │    Chart     │  │    │
-│  │  │   (ReUI)     │  │   (ReUI)     │  │  (Recharts)  │  │    │
-│  │  └──────────────┘  └──────────────┘  └──────────────┘  │    │
-│  │                                                         │    │
-│  │  Generative — LLM picks & composes via OpenUI.          │    │
-│  │  Streams in real-time as response arrives.              │    │
-│  └─────────────────────────────────────────────────────────┘    │
+│  ┌─────────────────────────────────────────────────────────────┐│
+│  │                  RESPONSE SURFACE                           ││
+│  │                                                             ││
+│  │  Generative — LLM picks & composes components via OpenUI.  ││
+│  │  Streams in real-time as response arrives.                  ││
+│  │                                                             ││
+│  │  Components: Data tables, charts, timelines, cards,        ││
+│  │  trees, steppers — all built with shadcn + existing deps.  ││
+│  │  Registered as OpenUI library for LLM to compose.          ││
+│  └─────────────────────────────────────────────────────────────┘│
 │                                                                 │
-│  ┌─────────────────────────────────────────────────────────┐    │
-│  │                  SUGGESTION RAIL                         │    │
-│  │  [Related query 1]  [Related query 2]  [Dig deeper →]   │    │
-│  └─────────────────────────────────────────────────────────┘    │
+│  ┌─────────────────────────────────────────────────────────────┐│
+│  │                  SUGGESTION RAIL                            ││
+│  │  [Related query 1]  [Related query 2]  [Dig deeper →]      ││
+│  └─────────────────────────────────────────────────────────────┘│
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -78,10 +109,10 @@ Each dimension is a **pill** — a small capsule button in the dimension bar. Ta
 |-----------|-----------|-------------------|--------------------|
 | **WHO** | 👤 Who | People picker, @mentions, entity search, role filter | "Sarah Chen", "Backend Team", "Customer: Acme" |
 | **WHAT** | 🎯 What | Action/topic selector, verb palette, content type | "deployments", "pull requests", "errors", "summarize" |
-| **WHEN** | 🕐 When | Timeline scrubber, date range picker, recency presets ("today", "this week", "last month") | "Last 7 days", "Since v2.3 release", "Yesterday" |
-| **WHERE** | 📍 Where | Source picker, repo/channel/system selector, data source | "GitHub", "Slack #engineering", "Production logs" |
+| **WHEN** | 🕐 When | Timeline scrubber, date range picker, recency presets | "Last 7 days", "Since v2.3 release", "Yesterday" |
+| **WHERE** | 📍 Where | Source picker, repo/channel/system selector | "GitHub", "Slack #engineering", "Production logs" |
 | **WHY** | 💡 Why | Goal/intent selector, reasoning depth, purpose | "Debug outage", "Prepare standup", "Audit security" |
-| **HOW** | ⚙️ How | Output format, detail level, response style | "Dashboard view", "Brief summary", "Detailed report", "Comparison table" |
+| **HOW** | ⚙️ How | Output format, detail level, response style | "Dashboard view", "Brief summary", "Detailed report" |
 
 ### Pill States
 
@@ -92,41 +123,64 @@ Each dimension is a **pill** — a small capsule button in the dimension bar. Ta
 
 ### Cross-dimension intelligence
 
-- Selecting WHO → narrows WHAT suggestions ("Sarah" → shows her repos, her PRs, her recent work)
-- Selecting WHEN → filters WHERE options ("Last 7 days" → shows only sources with recent activity)
-- Selecting WHY → shapes HOW defaults ("Debug outage" → defaults to "Detailed report" format)
-- AI proposes complete queries from partial input ("You selected Sarah + last week → Did you mean her PR review status?")
+- Selecting WHO → narrows WHAT suggestions
+- Selecting WHEN → filters WHERE options
+- Selecting WHY → shapes HOW defaults
+- AI proposes complete queries from partial input
 
 ---
 
-## Technology Stack
+## OpenUI Integration
 
-### Already Have (keep)
-- **Next.js 16** App Router — page routing, server components
-- **Vercel AI SDK** (`ai` + `@ai-sdk/react`) — `useChat`, `streamText`, model routing, tool execution
-- **AI Elements** — conversation components (for when cockpit escalates to chat)
-- **shadcn/ui** — base primitives (buttons, popovers, command palette, cards)
-- **Tailwind CSS v4** — styling
-- **Recharts** — charts
-- **Convex** — real-time backend, agent threads, subscriptions
-- **TanStack Table** — data tables
+### How it works
 
-### Adding
-- **[ReUI](https://github.com/keenthemes/reui)** — Dashboard-grade components built on shadcn:
-  - Data Grid (advanced, beyond TanStack Table)
-  - Kanban board
-  - Timeline
-  - Tree view
-  - Filters (faceted, stackable)
-  - Sortable lists
-  - Stepper
-  - Nested layouts
-- **[OpenUI](https://github.com/thesysdev/openui)** — Generative UI protocol:
-  - `@openuidev/react-lang` — define component library with Zod, streaming parser/renderer
-  - `@openuidev/react-ui` — prebuilt layouts (optional, may not need if we use our own)
-  - Auto-generates system prompt from component definitions
-  - LLM responds in OpenUI Lang (67% fewer tokens than JSON)
-  - Streaming renderer displays components as tokens arrive
+1. Build response widgets as normal React components (shadcn + Recharts + TanStack Table)
+2. Wrap each with `defineComponent` + Zod schema via `@openuidev/react-lang`
+3. Register them in a `cockpitLibrary`
+4. OpenUI auto-generates a system prompt teaching the LLM what components exist
+5. User manipulates dimensions → structured query sent to LLM with cockpit system prompt
+6. LLM responds in OpenUI Lang (compact, streaming-first)
+7. OpenUI's `<Renderer>` streams your components to screen as tokens arrive
+
+### Component Library Definition
+
+```typescript
+// src/components/cockpit/openui/cockpit-library.ts
+import { z } from "zod";
+import { defineComponent, createLibrary } from "@openuidev/react-lang";
+
+const DataTable = defineComponent({
+  name: "DataTable",
+  description: "Rich data table with sorting, filtering, pagination",
+  props: z.object({
+    title: z.string().optional(),
+    columns: z.array(z.object({ key: z.string(), label: z.string() })),
+    rows: z.array(z.record(z.string(), z.any())),
+  }),
+  component: ({ props }) => <CockpitDataTable {...props} />,
+});
+
+const TimelineView = defineComponent({
+  name: "Timeline",
+  description: "Chronological event timeline",
+  props: z.object({
+    events: z.array(z.object({
+      time: z.string(),
+      title: z.string(),
+      description: z.string().optional(),
+      status: z.enum(["success", "warning", "error", "info"]).optional(),
+    })),
+  }),
+  component: ({ props }) => <CockpitTimeline {...props} />,
+});
+
+// ... more widgets
+
+export const cockpitLibrary = createLibrary({
+  root: "Dashboard",
+  components: [DataTable, TimelineView, Chart, PeopleGrid, ...],
+});
+```
 
 ---
 
@@ -136,22 +190,19 @@ Each dimension is a **pill** — a small capsule button in the dimension bar. Ta
 src/
   app/
     page.tsx                           # → Cockpit (homepage)
-    cockpit/
-      page.tsx                         # Cockpit route (alias)
     chat/
       page.tsx                         # Existing chat
-      [threadId]/
-        page.tsx                       # Existing chat thread
+      [threadId]/page.tsx              # Existing chat thread
 
   components/
     cockpit/
       CockpitPage.tsx                  # Main cockpit layout
       DimensionBar.tsx                 # Horizontal strip of 6 pills
-      DimensionPill.tsx                # Individual pill (shared component)
+      DimensionPill.tsx                # Individual pill component
       QuerySynthesisBar.tsx            # Live query preview + free text input
-      ResponseSurface.tsx              # Generative response area (OpenUI renderer)
+      ResponseSurface.tsx              # OpenUI streaming renderer
       SuggestionRail.tsx               # Follow-up query suggestions
-      
+
       dimensions/
         WhoDimension.tsx               # People picker popover
         WhatDimension.tsx              # Action/topic selector popover
@@ -160,71 +211,24 @@ src/
         WhyDimension.tsx               # Intent/goal selector popover
         HowDimension.tsx               # Output format selector popover
         DimensionPopover.tsx           # Shared popover wrapper
-      
-      response-widgets/
-        PeopleGrid.tsx                 # WHO-heavy response → ReUI Data Grid
-        ActionKanban.tsx               # WHAT-heavy response → ReUI Kanban
-        EventTimeline.tsx              # WHEN-heavy response → ReUI Timeline
-        SourceTree.tsx                 # WHERE-heavy response → ReUI Tree
-        ReasoningSteps.tsx             # WHY-heavy response → ReUI Stepper
-        DashboardComposite.tsx         # Multi-dimension → composed layout
-        DataChart.tsx                  # Quantitative data → Recharts
-        ComparisonTable.tsx            # HOW="compare" → side-by-side
-      
+
+      widgets/
+        CockpitDataTable.tsx           # shadcn Table + TanStack Table
+        CockpitTimeline.tsx            # Custom timeline (shadcn + Tailwind)
+        CockpitChart.tsx               # Recharts wrapper
+        CockpitPeopleGrid.tsx          # People/entity cards
+        CockpitSummaryCard.tsx         # Summary/stats card
+        CockpitSteps.tsx               # Stepper/reasoning display
+        CockpitTree.tsx                # Hierarchical tree view
+        CockpitComparison.tsx          # Side-by-side comparison
+
       openui/
         cockpit-library.ts             # OpenUI component library definition
-        cockpit-renderer.tsx           # OpenUI streaming renderer config
+        cockpit-renderer.tsx           # OpenUI Renderer wired to cockpit
 
     chat/
       ... (existing chat components)
 ```
-
----
-
-## OpenUI Integration
-
-### Component Library Definition
-
-```typescript
-// cockpit-library.ts
-import { z } from "zod";
-import { defineComponent, createLibrary } from "@openuidev/react-lang";
-import { PeopleGrid } from "../response-widgets/PeopleGrid";
-import { EventTimeline } from "../response-widgets/EventTimeline";
-import { ActionKanban } from "../response-widgets/ActionKanban";
-// ... etc
-
-const PeopleGridComponent = defineComponent({
-  name: "PeopleGrid",
-  description: "Display people/entities in a rich data grid",
-  props: z.object({
-    people: z.array(z.object({
-      name: z.string(),
-      role: z.string().optional(),
-      avatar: z.string().url().optional(),
-      stats: z.record(z.string(), z.number()).optional(),
-    })),
-    title: z.string().optional(),
-  }),
-  component: ({ props }) => <PeopleGrid {...props} />,
-});
-
-// ... define all response widgets
-
-export const cockpitLibrary = createLibrary({
-  root: "Dashboard",
-  components: [PeopleGridComponent, TimelineComponent, KanbanComponent, ...],
-});
-```
-
-### Flow
-
-1. User manipulates dimension pills → selections form a structured intent
-2. `QuerySynthesisBar` assembles natural language query from selections
-3. Query sent to LLM with `cockpitLibrary.prompt()` as system prompt
-4. LLM responds in OpenUI Lang, referencing registered components
-5. `ResponseSurface` uses OpenUI's streaming `<Renderer>` to display live
-6. User sees ReUI widgets (data grids, timelines, kanban) composing in real-time
 
 ---
 
@@ -242,7 +246,7 @@ AI suggests: "...in GitHub" (auto-fills WHERE)
 User hits [Execute ⚡]
 
 Response surface streams in:
-  → Data Grid of PRs (title, status, reviewers, comments)
+  → Data table of PRs (title, status, reviewers, comments)
   → Timeline of PR activity
   → Summary card with stats
 ```
@@ -289,14 +293,13 @@ Shows:
 ### Phase 1: Foundation (Week 1)
 **Goal**: Cockpit page exists, dimension pills render, basic interaction works.
 
-- [ ] Create `/cockpit` route (and make it the homepage)
-- [ ] Install ReUI into the project
-- [ ] Install OpenUI (`@openuidev/react-lang`) into the project
+- [ ] Create `/cockpit` route and make it the homepage
+- [ ] Install OpenUI (`@openuidev/react-lang`)
 - [ ] Build `CockpitPage` layout (dimension bar + query bar + response area)
 - [ ] Build `DimensionBar` with 6 `DimensionPill` components
 - [ ] Build `DimensionPill` with empty/active/filled states
 - [ ] Build `QuerySynthesisBar` with live text assembly
-- [ ] Wire basic state management (Zustand store for dimension selections)
+- [ ] Wire dimension state management (Zustand or React context)
 - [ ] Empty state / cold start design
 
 ### Phase 2: Dimension Intelligence (Week 2)
@@ -304,17 +307,17 @@ Shows:
 
 - [ ] Build all 6 dimension popovers with appropriate controls
 - [ ] Wire dimensions to Convex-backed AI autocomplete
-- [ ] Implement cross-dimension filtering (WHO selection narrows WHAT)
+- [ ] Implement cross-dimension filtering
 - [ ] Implement free text → auto-populate dimensions (reverse flow)
 - [ ] Add AI-suggested complete queries from partial input
 - [ ] Keyboard shortcuts (Cmd+1 through Cmd+6 for dimensions)
 
-### Phase 3: Response Surface (Week 3)
-**Goal**: LLM responds with rich generative UI via OpenUI.
+### Phase 3: Response Surface + OpenUI (Week 3)
+**Goal**: LLM responds with rich generative UI.
 
-- [ ] Define `cockpit-library.ts` with all response widget components
-- [ ] Build response widgets: PeopleGrid, EventTimeline, ActionKanban, SourceTree, ReasoningSteps, DataChart, ComparisonTable
-- [ ] Wire OpenUI streaming renderer in ResponseSurface
+- [ ] Build cockpit widgets: DataTable, Timeline, Chart, PeopleGrid, SummaryCard, Steps, Tree, Comparison
+- [ ] Define `cockpit-library.ts` registering all widgets with Zod schemas
+- [ ] Wire OpenUI streaming `<Renderer>` in ResponseSurface
 - [ ] Connect to Convex Agent threads for AI execution
 - [ ] Stream responses via AI SDK with OpenUI Lang output
 - [ ] Suggestion rail with follow-up queries
@@ -324,23 +327,23 @@ Shows:
 
 - [ ] Cockpit → Chat escalation flow
 - [ ] Query history (recent cockpit queries)
-- [ ] Animations & transitions (pill expand/collapse, response stream-in)
+- [ ] Animations & transitions (Motion — pill expand/collapse, response stream-in)
 - [ ] Dark mode / visual polish — the "from the future" feel
-- [ ] Mobile responsive layout (dimension pills as horizontal scroll or bottom sheet)
-- [ ] Performance optimization (Convex subscriptions, streaming)
-- [ ] Persistence (dimension selections survive page refresh via Convex)
+- [ ] Mobile responsive layout
+- [ ] Persistence (dimension selections survive refresh via Convex)
+- [ ] Performance optimization
 
 ---
 
 ## Design Principles
 
-1. **Cockpit, not chatbot** — Every pixel should feel like an instrument panel, not a messaging app
-2. **Dimensions are the primitives** — Who/What/When/Where/Why/How are the fundamental axes of every query
-3. **Progressive disclosure** — Pills are minimal until tapped. Complexity reveals on demand.
+1. **Cockpit, not chatbot** — Every pixel should feel like an instrument panel
+2. **Dimensions are the primitives** — Who/What/When/Where/Why/How are the axes of every query
+3. **Progressive disclosure** — Pills are minimal until tapped
 4. **AI fills the gaps** — User provides partial intent, AI completes the rest
-5. **Responses are instruments** — Data grids, timelines, kanban boards — not paragraphs
-6. **Chat is the escape hatch** — When structured control isn't enough, drop into freeform conversation
-7. **Speed** — Everything streams. Everything is real-time. No loading spinners, only progressive reveal.
+5. **Responses are instruments** — Data grids, timelines, charts — not paragraphs
+6. **Chat is the escape hatch** — When structured control isn't enough, drop into freeform
+7. **Speed** — Everything streams. No loading spinners, only progressive reveal.
 
 ---
 
@@ -348,11 +351,11 @@ Shows:
 
 1. **Dimension persistence** — Do selections persist across sessions? Per-user Convex state?
 2. **Multi-query** — Can the cockpit hold multiple response surfaces (tabbed? stacked?)?
-3. **Connectors** — What sources does WHERE dimension support at launch? (GitHub, Slack, Convex data?)
-4. **Mobile** — Horizontal pill scroll? Bottom sheet dimensions? Or cockpit is desktop-first?
+3. **Connectors** — What sources does WHERE support at launch? (GitHub, Slack, Convex data?)
+4. **Mobile** — Horizontal pill scroll? Bottom sheet dimensions? Desktop-first?
 5. **Sharing** — Can you share a cockpit query (URL with dimension state encoded)?
 6. **Agents** — Does each cockpit query spawn a Convex Agent thread? Or reuse one?
 
 ---
 
-*Master plan created 2026-04-18. Ready to execute on your go.*
+*Master plan v2 — 2026-04-18. ReUI dropped. OpenUI is the only new dependency.*
